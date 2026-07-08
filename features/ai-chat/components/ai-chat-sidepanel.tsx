@@ -1146,14 +1146,10 @@ export const AIChatSidePanel: React.FC<AIChatSidePanelProps> = ({
                           remarkPlugins={[remarkGfm, remarkMath]}
                           rehypePlugins={[rehypeKatex]}
                           components={{
-                            code: ({
-                              children,
-                              className,
-                              inline: _inline,
-                            }) => (
+                            code: ({ children, className }) => (
                               <EnhancedCodeBlock
                                 className={className}
-                                inline={_inline as boolean}
+                                inline={!className}
                                 onInsert={
                                   onInsertCode
                                     ? (code) => handleInsertCode(code)

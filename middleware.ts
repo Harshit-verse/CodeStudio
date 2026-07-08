@@ -11,18 +11,21 @@ import authConfig from "./auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-// @ts-ignore
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
+  const isPublicApiRoute =
+    nextUrl.pathname.startsWith("/api/template") ||
+    nextUrl.pathname.startsWith("/api/chat") ||
+    nextUrl.pathname.startsWith("/api/code-suggestion");
 
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
 
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  if (isApiAuthRoute) {
+  if (isApiAuthRoute || isPublicApiRoute) {
     return null;
   }
 

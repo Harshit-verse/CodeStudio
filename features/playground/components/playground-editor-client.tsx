@@ -1,23 +1,29 @@
 "use client";
 import React from 'react'
 import { PlaygroundEditor } from './playground-editor'
-import type { FileSystemItem } from './playground-editor'
+import type { TemplateFile } from '@/features/playground/libs/path-to-json'
 
 interface PlaygroundEditorClientProps {
-  templateData: FileSystemItem
+  activeFile?: TemplateFile
+  content?: string
 }
 
-const PlaygroundEditorClient: React.FC<PlaygroundEditorClientProps> = ({ templateData }) => {
-  const handleSave = async (file: FileSystemItem, content: string) => {
-    // TODO: Implement save functionality
-    console.log('Saving file:', file, 'with content:', content)
-  }
-
+const PlaygroundEditorClient: React.FC<PlaygroundEditorClientProps> = ({
+  activeFile,
+  content = "",
+}) => {
   return (
     <div className="h-screen">
       <PlaygroundEditor 
-        templateData={templateData} 
-        onSave={handleSave}
+        activeFile={activeFile}
+        content={content}
+        onContentChange={() => {}}
+        suggestion={null}
+        suggestionLoading={false}
+        suggestionPosition={null}
+        onAcceptSuggestion={() => {}}
+        onRejectSuggestion={() => {}}
+        onTriggerSuggestion={async () => {}}
       />
     </div>
   )

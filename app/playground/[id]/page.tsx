@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { TemplateFileTree } from "@/features/playground/components/playground-explorer";
-import type { TemplateFile } from "@/features/playground/libs/path-to-json";
+import type { TemplateFile, TemplateItem } from "@/features/playground/libs/path-to-json";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -45,7 +45,6 @@ import { useFileExplorer } from "@/features/playground/hooks/useFileExplorer";
 import { usePlayground } from "@/features/playground/hooks/usePlayground";
 import { useAISuggestions } from "@/features/playground/hooks/useAISuggestion";
 import { useWebContainer } from "@/features/webcontainers/hooks/useWebContainer";
-import { SaveUpdatedCode } from "@/features/playground/actions";
 import { TemplateFolder } from "@/features/playground/types";
 import { findFilePath } from "@/features/playground/libs";
 import { ConfirmationDialog } from "@/features/playground/components/dialogs/conformation-dialog";
@@ -73,7 +72,6 @@ const MainPlaygroundPage: React.FC = () => {
     closeAllFiles,
     openFile,
     closeFile,
-    editorContent,
     updateFileContent,
     handleAddFile,
     handleAddFolder,
@@ -94,7 +92,6 @@ const MainPlaygroundPage: React.FC = () => {
     error: containerError,
     instance,
     writeFileSync,
-    // @ts-ignore
   } = useWebContainer({ templateData });
 
   const lastSyncedContent = useRef<Map<string, string>>(new Map());
@@ -208,11 +205,11 @@ const MainPlaygroundPage: React.FC = () => {
         // Update file content in template data (clone for immutability)
         const updatedTemplateData = JSON.parse(
           JSON.stringify(latestTemplateData)
-        );
-        const updateFileContent = (items: any[]) =>
+        ) as TemplateFolder;
+        const applyFileContent = (items: TemplateItem[]): TemplateItem[] =>
           items.map((item) => {
             if ("folderName" in item) {
-              return { ...item, items: updateFileContent(item.items) };
+              return { ...item, items: applyFileContent(item.items) };
             } else if (
               item.filename === fileToSave.filename &&
               item.fileExtension === fileToSave.fileExtension
@@ -221,9 +218,9 @@ const MainPlaygroundPage: React.FC = () => {
             }
             return item;
           });
-        updatedTemplateData.items = updateFileContent(
+        updatedTemplateData.items = applyFileContent(
           updatedTemplateData.items
-        );
+        ) as TemplateFolder["items"];
 
         // Sync with WebContainer
         if (writeFileSync) {
@@ -235,8 +232,8 @@ const MainPlaygroundPage: React.FC = () => {
         }
 
         // Use saveTemplateData to persist changes
-        const newTemplateData = await saveTemplateData(updatedTemplateData);
-        setTemplateData(newTemplateData || updatedTemplateData);
+        await saveTemplateData(updatedTemplateData);
+        setTemplateData(updatedTemplateData);
 
         // Update open files
         const updatedOpenFiles = openFiles.map((f) =>
@@ -284,7 +281,7 @@ const MainPlaygroundPage: React.FC = () => {
     try {
       await Promise.all(unsavedFiles.map((f) => handleSave(f.id)));
       toast.success(`Saved ${unsavedFiles.length} file(s)`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to save some files");
     }
   };

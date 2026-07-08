@@ -14,6 +14,10 @@ interface EnhancePromptRequest {
   }
 }
 
+interface OllamaGenerateResponse {
+  response?: string
+}
+
 async function generateAIResponse(messages: ChatMessage[]) {
   const systemPrompt = `You are an expert AI coding assistant. You help developers with:
 - Code explanations and debugging
@@ -62,7 +66,7 @@ Keep responses concise but comprehensive. Use code blocks with language specific
       throw new Error(`AI model API error: ${response.status} - ${errorText}`)
     }
 
-    const data = await response.json()
+    const data = (await response.json()) as OllamaGenerateResponse
     if (!data.response) {
       throw new Error("No response from AI model")
     }
@@ -114,7 +118,7 @@ Return only the enhanced prompt, nothing else.`
       throw new Error("Failed to enhance prompt")
     }
 
-    const data = await response.json()
+    const data = (await response.json()) as OllamaGenerateResponse
     return data.response?.trim() || request.prompt
   } catch (error) {
     console.error("Prompt enhancement error:", error)
@@ -139,15 +143,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required and must be a string" }, { status: 400 })
     }
 
-    const validHistory = Array.isArray(history)
-      ? history.filter(
-          (msg: any) =>
-            msg &&
-            typeof msg === "object" &&
-            typeof msg.role === "string" &&
-            typeof msg.content === "string" &&
-            ["user", "assistant"].includes(msg.role),
-        )
+    const validHistory: ChatMessage[] = Array.isArray(history)
+      ? history.filter((msg: unknown): msg is ChatMessage => {
+          if (!msg || typeof msg !== "object") return false
+
+          const candidate = msg as Partial<ChatMessage>
+          return (
+            typeof candidate.role === "string" &&
+            typeof candidate.content === "string" &&
+            ["user", "assistant"].includes(candidate.role)
+          )
+        })
       : []
 
     const recentHistory = validHistory.slice(-10)

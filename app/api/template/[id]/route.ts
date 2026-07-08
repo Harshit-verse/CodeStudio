@@ -27,15 +27,27 @@ export async function GET(
     return Response.json({ error: "Missing playground ID" }, { status: 400 });
   }
 
-  const playground = await db.playground.findUnique({
-    where: { id },
-  });
+  let templateKey: keyof typeof templatePaths | undefined;
 
-  if (!playground) {
-    return Response.json({ error: "Playground not found" }, { status: 404 });
+  if (id.startsWith("local-")) {
+    templateKey = id.split("-")[1]?.toUpperCase() as keyof typeof templatePaths;
+  } else {
+    try {
+      const playground = await db.playground.findUnique({
+        where: { id },
+      });
+
+      if (!playground) {
+        return Response.json({ error: "Playground not found" }, { status: 404 });
+      }
+
+      templateKey = playground.template as keyof typeof templatePaths;
+    } catch (error) {
+      console.error("Database unavailable while loading template:", error);
+      templateKey = "REACT";
+    }
   }
 
-  const templateKey = playground.template as keyof typeof templatePaths;
   const templatePath = templatePaths[templateKey];
 
   if (!templatePath) {

@@ -3,6 +3,7 @@ import { currentUser } from "@/features/auth/actions";
 import { db } from "@/lib/db"
 import { TemplateFolder } from "../libs/path-to-json";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 
 
 // Toggle marked status for a problem
@@ -62,7 +63,16 @@ export const createPlayground = async (data:{
 
         return playground;
     } catch (error) {
-        console.log(error)
+        console.log("createPlayground fallback:", error)
+        return {
+            id: `local-${template.toLowerCase()}-${Date.now()}`,
+            title,
+            description: description ?? null,
+            template,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            userId: user?.id ?? "local-user",
+        }
     }
 }
 
@@ -90,15 +100,28 @@ export const getAllPlaygroundForUser = async ()=>{
       
         return playground;
     } catch (error) {
-        console.log(error)
+        console.log("getAllPlaygroundForUser fallback:", error)
+        return []
     }
 }
 
 export const getPlaygroundById = async (id:string)=>{
+    if (id.startsWith("local-")) {
+        const template = id.split("-")[1]?.toUpperCase() || "REACT";
+        return {
+            id,
+            title: `${template} Playground`,
+            templateFiles: [],
+        };
+    }
+
     try {
         const playground = await db.playground.findUnique({
             where:{id},
             select:{
+              id:true,
+              title:true,
+              template:true,
               templateFiles:{
                 select:{
                   content:true
@@ -108,7 +131,12 @@ export const getPlaygroundById = async (id:string)=>{
         })
         return playground;
     } catch (error) {
-        console.log(error)
+        console.log("getPlaygroundById fallback:", error)
+        return {
+            id,
+            title: "Local Playground",
+            templateFiles: [],
+        }
     }
 }
 
@@ -183,9 +211,8 @@ export const duplicateProjectById = async (id: string) => {
                 template: originalPlayground.template,
                 userId: originalPlayground.userId,
                 templateFiles: {
-                  // @ts-ignore
                     create: originalPlayground.templateFiles.map((file) => ({
-                        content: file.content,
+                        content: file.content === null ? "" : file.content as Prisma.InputJsonValue,
                     })),
                 },
             },

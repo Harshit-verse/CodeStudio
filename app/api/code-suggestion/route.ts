@@ -21,6 +21,10 @@ interface CodeContext {
   incompletePatterns: string[]
 }
 
+interface OllamaGenerateResponse {
+  response?: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: CodeSuggestionRequest = await request.json()
@@ -50,9 +54,10 @@ export async function POST(request: NextRequest) {
         generatedAt: new Date().toISOString(),
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Context analysis error:", error)
-    return NextResponse.json({ error: "Internal server error", message: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : "Unknown error"
+    return NextResponse.json({ error: "Internal server error", message }, { status: 500 })
   }
 }
 
@@ -148,8 +153,8 @@ async function generateSuggestion(prompt: string): Promise<string> {
       throw new Error(`AI service error: ${response.statusText}`)
     }
 
-    const data = await response.json()
-    let suggestion = data.response
+    const data = (await response.json()) as OllamaGenerateResponse
+    let suggestion = data.response || ""
 
     // Clean up the suggestion
     if (suggestion.includes("```")) {
@@ -236,12 +241,4 @@ function detectIncompletePatterns(line: string, column: number): string[] {
   if (/\.\s*$/.test(beforeCursor)) patterns.push("method-call")
 
   return patterns
-}
-
-function getLastNonEmptyLine(lines: string[], currentLine: number): string {
-  for (let i = currentLine - 1; i >= 0; i--) {
-    const line = lines[i]
-    if (line.trim() !== "") return line
-  }
-  return ""
 }

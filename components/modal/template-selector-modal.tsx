@@ -50,10 +50,12 @@ interface TemplateOption {
   category: "frontend" | "backend" | "fullstack";
 }
 
+type CategoryFilter = "all" | TemplateOption["category"];
+
 const templates: TemplateOption[] = [
   {
     id: "react",
-    name: "React",
+    name: "⚛️ React",
     description:
       "A JavaScript library for building user interfaces with component-based architecture",
     icon: "/react.svg",
@@ -65,7 +67,7 @@ const templates: TemplateOption[] = [
   },
   {
     id: "nextjs",
-    name: "Next.js",
+    name: "▲ Next.js",
     description:
       "The React framework for production with server-side rendering and static site generation",
     icon: "/nextjs-icon.svg",
@@ -77,7 +79,7 @@ const templates: TemplateOption[] = [
   },
   {
     id: "express",
-    name: "Express",
+    name: "🚀 Express.js",
     description:
       "Fast, unopinionated, minimalist web framework for Node.js to build APIs and web applications",
     icon: "/expressjs-icon.svg",
@@ -89,7 +91,7 @@ const templates: TemplateOption[] = [
   },
   {
     id: "vue",
-    name: "Vue.js",
+    name: "💚 Vue.js",
     description:
       "Progressive JavaScript framework for building user interfaces with an approachable learning curve",
     icon: "/vuejs-icon.svg",
@@ -101,7 +103,7 @@ const templates: TemplateOption[] = [
   },
   {
     id: "hono",
-    name: "Hono",
+    name: "🔥 Hono",
     description:
       "Fast, lightweight, built on Web Standards. Support for any JavaScript runtime.",
     icon: "/hono.svg",
@@ -117,7 +119,7 @@ const templates: TemplateOption[] = [
   },
   {
     id: "angular",
-    name: "Angular",
+    name: "🅰️ Angular",
     description:
       "Angular is a web framework that empowers developers to build fast, reliable applications.",
     icon: "/angular-2.svg",
@@ -143,9 +145,7 @@ const TemplateSelectionModal = ({
   const [step, setStep] = useState<"select" | "configure">("select");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState<
-    "all" | "frontend" | "backend" | "fullstack"
-  >("all");
+  const [category, setCategory] = useState<CategoryFilter>("all");
   const [projectName, setProjectName] = useState("");
 
   const filteredTemplates = templates.filter((template) => {
@@ -268,7 +268,7 @@ const TemplateSelectionModal = ({
                 <Tabs
                   defaultValue="all"
                   className="w-full sm:w-auto"
-                  onValueChange={(value) => setCategory(value as any)}
+                  onValueChange={(value) => setCategory(value as CategoryFilter)}
                 >
                   <TabsList className="grid grid-cols-4 w-full sm:w-[400px]">
                     <TabsTrigger value="all">All</TabsTrigger>
